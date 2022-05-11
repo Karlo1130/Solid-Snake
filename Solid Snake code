@@ -3,6 +3,8 @@
 #include <ctime>
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
+#include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
 #include <allegro5/allegro_image.h>
 
@@ -35,12 +37,10 @@ float between_f(float lo, float hi)
 
 
 //cajas de colision (funcion que detecta colisiones)
-bool collide(int ax1, int ay1, int ax2, int ay2, int bx1, int by1, int bx2, int by2)
+bool collide(int x, int y)
 {
-    if (ax1 > bx2) return false;
-    if (ax2 < bx1) return false;
-    if (ay1 > by2) return false;
-    if (ay2 < by1) return false;
+    if (x == y) return false;
+    if (y == x) return false;
 
     return true;
 }
@@ -49,7 +49,7 @@ bool collide(int ax1, int ay1, int ax2, int ay2, int bx1, int by1, int bx2, int 
 #define BUFFER_W 320
 #define BUFFER_H 240
 
-#define DISP_SCALE 4
+#define DISP_SCALE 1
 #define DISP_W (BUFFER_W * DISP_SCALE)
 #define DISP_H (BUFFER_H * DISP_SCALE)
 
@@ -177,7 +177,6 @@ void sprites_deinit()
 }
 
 //propiedades de la serpiente
-#define SNAKE_SPEED 3
 #define SNAKE_MAX_X (BUFFER_W - SNAKE_W)
 #define SNAKE_MAX_Y (BUFFER_H - SNAKE_H)
 
@@ -185,7 +184,6 @@ typedef struct SNAKE
 {
     int x, y;
     int lives;
-
 
 }SNAKE;
 SNAKE snake;
@@ -235,7 +233,10 @@ void snake_update()
         snake.x = SNAKE_MAX_X;
     if (snake.y > SNAKE_MAX_Y)
         snake.y = SNAKE_MAX_Y;
+
 }
+
+
 
 void snake_draw()
 {
@@ -281,22 +282,88 @@ void apple_init()
 
     apple.x = xVector[xRand];
     apple.y = yVector[yRand];
-    
-    if (apple.x < 0)
-        apple.x = 0;
-    if (apple.y < 0)
-        apple.y = 0;
-
-    if (apple.x > SNAKE_MAX_X)
-        apple.x = SNAKE_MAX_X;
-    if (apple.y > SNAKE_MAX_Y)
-        apple.y = SNAKE_MAX_Y;
 }
 
+void apple_update()
+{
+    if (snake.x == apple.x && snake.y == apple.y)
+    {
+        score += 50;
+        int xVector[20];
+        int yVector[15];
+        int aux = 0, auxi = 0;
+        int xRand, yRand;
+
+        for (int i = 0; i < 20; i++)
+        {
+            xVector[i] = aux;
+            aux += 16;
+        }
+
+        for (int i = 0; i < 15; i++)
+        {
+            yVector[i] = auxi;
+            auxi += 16;
+        }
+
+        xRand = rand() % 20;
+        yRand = rand() % 15;
+
+        if (xRand == apple.x && yRand == apple.y)
+        {
+            xRand = rand() % 20;
+            yRand = rand() % 15;
+        }
+
+        apple.x = xVector[xRand];
+        apple.y = yVector[yRand];
+    }
+}
 
 void apple_draw()
 {
     al_draw_bitmap(sprites.apple, apple.x, apple.y, 0);
+}
+
+ALLEGRO_FONT* font;
+long score_display;
+
+void hud_init()
+{
+    font = al_create_builtin_font();
+    must_init(font, "font");
+
+    score_display = 0;
+}
+
+void hud_deinit()
+{
+    al_destroy_font(font);
+}
+
+void hud_update()
+{
+    if (frames % 2)
+        return;
+
+    for (long i = 5; i > 0; i--)
+    {
+        long diff = 1 << i;
+        if (score_display <= (score - diff))
+            score_display += diff;
+    }
+}
+
+void hud_draw()
+{
+    al_draw_textf(
+        font,
+        al_map_rgb_f(1, 1, 1),
+        1, 1,
+        0,
+        "%06ld",
+        score_display
+    );
 }
 
 int main()
@@ -316,6 +383,8 @@ int main()
 
     must_init(al_init_image_addon(), "image");
     sprites_init();
+
+    hud_init();
 
     al_register_event_source(queue, al_get_keyboard_event_source());
     al_register_event_source(queue, al_get_display_event_source(disp));
@@ -343,6 +412,8 @@ int main()
         case ALLEGRO_EVENT_TIMER:
             
             snake_update();
+            apple_update();
+            hud_update();
 
             if (key[ALLEGRO_KEY_ESCAPE])
                 done = true;
@@ -367,6 +438,7 @@ int main()
 
             apple_draw();
             snake_draw();
+            hud_draw();
 
             disp_post_draw();
             redraw = false;
@@ -377,6 +449,7 @@ int main()
     disp_deinit();
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
+    hud_deinit();
 
     return 0;
 }
