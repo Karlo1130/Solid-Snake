@@ -7,6 +7,7 @@
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
 #include <allegro5/allegro_image.h>
+#include <Windows.h>
 
 long frames;
 long score;
@@ -49,7 +50,7 @@ bool collide(int x, int y)
 #define BUFFER_W 320
 #define BUFFER_H 240
 
-#define DISP_SCALE 1
+#define DISP_SCALE 4
 #define DISP_W (BUFFER_W * DISP_SCALE)
 #define DISP_H (BUFFER_H * DISP_SCALE)
 
@@ -179,6 +180,8 @@ void sprites_deinit()
 //propiedades de la serpiente
 #define SNAKE_MAX_X (BUFFER_W - SNAKE_W)
 #define SNAKE_MAX_Y (BUFFER_H - SNAKE_H)
+#define LIMIT 300
+int tales = 3;
 
 typedef struct SNAKE
 {
@@ -186,65 +189,111 @@ typedef struct SNAKE
     int lives;
 
 }SNAKE;
-SNAKE snake;
+SNAKE snake[LIMIT];
 
 void snake_init()
 {
-    snake.x = (BUFFER_W / 2) - (SNAKE_W);
-    snake.y = (BUFFER_W / 2) - (SNAKE_H);
-    snake.lives = 1;
+    snake[0].x = (BUFFER_W / 2) - (SNAKE_W);
+    snake[0].y = (BUFFER_W / 2) - (SNAKE_H);
+    snake[0].lives = 0;
 }
 
-int movement = 0;
+int movement = 4;
 
 void snake_update()
 {
-    if (snake.lives < 0)
+    if (snake[0].lives < 0)
         return;
 
     if (key[ALLEGRO_KEY_UP])
-        movement = 8;
+    {
+        if (movement != 2)
+            movement = 8;
+    }
     else if (key[ALLEGRO_KEY_DOWN])
-        movement = 2;
+    {
+        if (movement != 8)
+            movement = 2;
+    }
     else if (key[ALLEGRO_KEY_LEFT])
-        movement = 4;
+    {
+        if (movement != 6)
+            movement = 4;
+    }
     else if (key[ALLEGRO_KEY_RIGHT])
-        movement = 6;
+    {
+        if (movement != 4)
+            movement = 6;
+    }
 
     if (movement == 8) {
-        snake.y -= 16;
+        snake[0].y -= 16;
     }
     else if (movement == 2) {
-        snake.y += 16;
+        snake[0].y += 16;
     }
     else if (movement == 4) {
-        snake.x -= 16;
+        snake[0].x -= 16;
     }
     else if (movement == 6) {
-        snake.x += 16;
+        snake[0].x += 16;
     }
 
-    if (snake.x < 0)
-        snake.x = 0;
-    if (snake.y < 0)
-        snake.y = 0;
+    if (snake[0].x < 0)
+        snake[0].x = 0;
+    if (snake[0].y < 0)
+        snake[0].y = 0;
 
-    if (snake.x > SNAKE_MAX_X)
-        snake.x = SNAKE_MAX_X;
-    if (snake.y > SNAKE_MAX_Y)
-        snake.y = SNAKE_MAX_Y;
+    if (snake[0].x > SNAKE_MAX_X)
+        snake[0].x = SNAKE_MAX_X;
+    if (snake[0].y > SNAKE_MAX_Y)
+        snake[0].y = SNAKE_MAX_Y;
+
+    for (int i = 1; i < LIMIT; i++)
+    {
+        if (snake[0].x == snake[i].x && snake[0].y == snake[i].y)
+        {
+            snake[0].lives--;
+        }
+    }
+}
+
+void snake_draw()
+{
+    if (snake[0].lives < 0)
+        return;
+
+    al_draw_bitmap(sprites.snake, snake[0].x, snake[0].y, 0);
 
 }
 
 
-
-void snake_draw()
+void tale_init()
 {
-    if (snake.lives < 0)
+    for (int i = 1; i <= tales; i++)
+    {
+        snake[i].x = snake[0].x + (i * 16);
+        snake[i].y = snake[0].y;
+    }
+}
+
+void tale_update()
+{
+    for (int i = tales + 1; i > 0; i--)
+    {
+        snake[i] = snake[i - 1];
+    }
+}
+
+void tale_draw()
+{
+    if (snake[0].lives < 0)
         return;
 
-    al_draw_bitmap(sprites.snake, snake.x, snake.y, 0);
-
+    for (int i = 1; i <= tales; i++)
+    {
+        al_draw_bitmap(sprites.snake, snake[i].x, snake[i].y, 0);
+    }
 }
 
 //propiedades de la manzana
@@ -286,8 +335,9 @@ void apple_init()
 
 void apple_update()
 {
-    if (snake.x == apple.x && snake.y == apple.y)
+    if (snake[0].x == apple.x && snake[0].y == apple.y)
     {
+        tales += 1;
         score += 50;
         int xVector[20];
         int yVector[15];
@@ -379,6 +429,8 @@ int main()
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     must_init(queue, "queue");
 
+
+
     disp_init();
 
     must_init(al_init_image_addon(), "image");
@@ -392,6 +444,7 @@ int main()
 
     keyboard_init();
     snake_init();
+    tale_init();
     apple_init();
     
     frames = 0;
@@ -411,6 +464,7 @@ int main()
         {
         case ALLEGRO_EVENT_TIMER:
             
+            tale_update();
             snake_update();
             apple_update();
             hud_update();
@@ -438,6 +492,8 @@ int main()
 
             apple_draw();
             snake_draw();
+            tale_draw();
+            
             hud_draw();
 
             disp_post_draw();
