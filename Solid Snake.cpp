@@ -1,0 +1,501 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctime>
+#include <allegro5/allegro5.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_acodec.h>
+#include <allegro5/allegro_image.h>
+#include <Windows.h>
+
+long frames;
+long score;
+
+/*
+must_init es una funcion que asegura que cada paso se ejecuto de manera correcta,
+si no lo hizo entonces lo inprime en consola
+*/
+void must_init(bool test, const char* description)
+{
+    if (test) return;
+
+    printf("couldn't initialize %s\n", description);
+    exit(1);
+}
+
+//constantes del display
+#define BUFFER_W 320
+#define BUFFER_H 240
+
+#define DISP_SCALE 2
+#define DISP_W (BUFFER_W * DISP_SCALE)
+#define DISP_H (BUFFER_H * DISP_SCALE)
+
+ALLEGRO_DISPLAY* disp;
+ALLEGRO_BITMAP* buffer;
+
+//funcion que crean el display
+
+void disp_init()
+{
+    disp = al_create_display(DISP_W, DISP_H);
+    must_init(disp, "display");
+
+    buffer = al_create_bitmap(BUFFER_W, BUFFER_H);
+    must_init(buffer, "bitmap buffer");
+}
+
+//funcion que destruye el display y el bitmap
+
+void disp_deinit()
+{
+    al_destroy_bitmap(buffer);
+    al_destroy_display(disp);
+}
+
+//funcion para mostrar cosas en el buffer en vez del display
+void disp_pre_draw()
+{
+    al_set_target_bitmap(buffer);
+}
+
+//funcion para dibujar otra vez en el display en vez de el buffer
+void disp_post_draw()
+{
+    al_set_target_backbuffer(disp);
+    al_draw_scaled_bitmap(buffer, 0, 0, BUFFER_W, BUFFER_H, 0, 0, DISP_W, DISP_H, 0);
+
+    al_flip_display();
+}
+
+#define KEY_SEEN     1
+#define KEY_RELEASED 2
+unsigned char key[ALLEGRO_KEY_MAX];
+
+void keyboard_init()
+{
+    memset(key, 0, sizeof(key));
+}
+
+//funcion que se llamara cada loop para asegurar que las teclas se actualizan cada vez
+void keyboard_update(ALLEGRO_EVENT* event)
+{
+    switch (event->type)
+    {
+    case ALLEGRO_EVENT_TIMER:
+        for (int i = 0; i < ALLEGRO_KEY_MAX; i++)
+            key[i] &= KEY_SEEN;
+        break;
+
+    case ALLEGRO_EVENT_KEY_DOWN:
+        key[event->keyboard.keycode] = KEY_SEEN | KEY_RELEASED;
+        break;
+    case ALLEGRO_EVENT_KEY_UP:
+        key[event->keyboard.keycode] &= KEY_RELEASED;
+        break;
+    }
+}
+
+#define SNAKE_W 16
+#define SNAKE_H 16
+
+#define APPLE_W 31
+#define APPLE_H 16
+
+#define GRASS_W 15
+#define GRASS_H 31
+
+#define WEED_W 31
+#define WEED_H 31
+
+
+typedef struct SPRITES
+{
+    ALLEGRO_BITMAP* _sheet;
+
+    ALLEGRO_BITMAP* snake;
+
+    ALLEGRO_BITMAP* apple;
+
+    ALLEGRO_BITMAP* grass;
+    ALLEGRO_BITMAP* weed;
+
+} SPRITES;
+SPRITES sprites;
+
+ALLEGRO_BITMAP* sprite_grab(int x, int y, int w, int h)
+{
+    ALLEGRO_BITMAP* sprite = al_create_sub_bitmap(sprites._sheet, x, y, w, h);
+    must_init(sprite, "sprite grab");
+    return sprite;
+}
+
+//se declaran los pixeles de los sprites
+void sprites_init()
+{
+    sprites._sheet = al_load_bitmap("GameSnake.png");
+    must_init(sprites._sheet, "GameSnake");
+
+    sprites.snake = sprite_grab(0, 0, SNAKE_W, SNAKE_H);
+
+    sprites.apple = sprite_grab(16, 0, APPLE_W, APPLE_H);
+
+    sprites.grass = sprite_grab(0, 17, GRASS_W, GRASS_H);
+    sprites.weed = sprite_grab(16, 17, WEED_W, WEED_H);
+}
+
+void sprites_deinit()
+{
+    al_destroy_bitmap(sprites.snake);
+    al_destroy_bitmap(sprites.apple);
+    al_destroy_bitmap(sprites.grass);
+    al_destroy_bitmap(sprites.weed);
+
+    al_destroy_bitmap(sprites._sheet);
+}
+
+//propiedades de la serpiente
+#define SNAKE_MAX_X (BUFFER_W - SNAKE_W)
+#define SNAKE_MAX_Y (BUFFER_H - SNAKE_H)
+#define LIMIT 300
+int tales = 3;
+
+typedef struct SNAKE
+{
+    int x, y;
+    int lives;
+
+}SNAKE;
+SNAKE snake[LIMIT];
+
+void snake_init()
+{
+    snake[0].x = (BUFFER_W / 2) - (SNAKE_W);
+    snake[0].y = (BUFFER_W / 2) - (SNAKE_H);
+    snake[0].lives = 0;
+
+    
+    for (int i = tales + 1; i < LIMIT; i++)
+    {
+        snake[i] = snake[i - 1];
+    }
+    
+}
+
+int movement = 4;
+
+void snake_update()
+{
+    if (snake[0].lives < 0)
+        return;
+
+    if (key[ALLEGRO_KEY_UP])
+    {
+        if (movement != 2)
+            movement = 8;
+    }
+    else if (key[ALLEGRO_KEY_DOWN])
+    {
+        if (movement != 8)
+            movement = 2;
+    }
+    else if (key[ALLEGRO_KEY_LEFT])
+    {
+        if (movement != 6)
+            movement = 4;
+    }
+    else if (key[ALLEGRO_KEY_RIGHT])
+    {
+        if (movement != 4)
+            movement = 6;
+    }
+
+    if (movement == 8) {
+        snake[0].y -= 16;
+    }
+    else if (movement == 2) {
+        snake[0].y += 16;
+    }
+    else if (movement == 4) {
+        snake[0].x -= 16;
+    }
+    else if (movement == 6) {
+        snake[0].x += 16;
+    }
+
+    if (snake[0].x < 0)
+        snake[0].x = 0;
+    if (snake[0].y < 0)
+        snake[0].y = 0;
+
+    if (snake[0].x > SNAKE_MAX_X)
+        snake[0].x = SNAKE_MAX_X;
+    if (snake[0].y > SNAKE_MAX_Y)
+        snake[0].y = SNAKE_MAX_Y;
+
+
+    for (int i = 1; i < LIMIT; i++)
+    {
+        if (snake[0].x == snake[i].x && snake[0].y == snake[i].y)
+        {
+            snake[0].lives--;
+        }
+    }
+
+    for (int i = tales + 1; i < LIMIT; i++)
+    {
+        snake[i] = snake[i - 1];
+    }
+
+}
+
+void snake_draw()
+{
+    if (snake[0].lives < 0)
+        return;
+
+    al_draw_bitmap(sprites.snake, snake[0].x, snake[0].y, 0);
+
+}
+
+
+void tale_init()
+{
+    for (int i = 1; i <= tales; i++)
+    {
+        snake[i].x = snake[0].x + (i * 16);
+        snake[i].y = snake[0].y;
+    }
+}
+
+void tale_update()
+{
+    for (int i = tales; i > 0; i--)
+    {
+        snake[i] = snake[i - 1];
+    }
+}
+
+void tale_draw()
+{
+    if (snake[0].lives < 0)
+        return;
+
+    for (int i = 1; i <= tales; i++)
+    {
+        al_draw_bitmap(sprites.grass, snake[i].x, snake[i].y, 0);
+    }
+}
+
+//propiedades de la manzana
+#define APPLE_MAX_X (BUFFER_W - APPLE_W)
+#define APPLE_MAX_Y (BUFFER_H - APPLE_H)
+
+typedef struct APPLE
+{
+    int x, y;
+
+}APPLE;
+APPLE apple;
+
+void apple_init()
+{
+    int xVector[20];
+    int yVector[15];
+    int aux = 0, auxi = 0;
+    int xRand, yRand;
+
+    for (int i = 0; i < 20; i++)
+    {
+        xVector[i] = aux;
+        aux += 16;
+    }
+
+    for (int i = 0; i < 15; i++)
+    {
+        yVector[i] = auxi;
+        auxi += 16;
+    }
+
+    xRand = rand() % 20;
+    yRand = rand() % 15;
+
+    apple.x = xVector[xRand];
+    apple.y = yVector[yRand];
+}
+
+void apple_update()
+{
+    if (snake[0].x == apple.x && snake[0].y == apple.y)
+    {
+        tales += 1;
+        score += 50;
+        int xVector[20];
+        int yVector[15];
+        int aux = 0, auxi = 0;
+        int xRand, yRand;
+
+        for (int i = 0; i < 20; i++)
+        {
+            xVector[i] = aux;
+            aux += 16;
+        }
+
+        for (int i = 0; i < 15; i++)
+        {
+            yVector[i] = auxi;
+            auxi += 16;
+        }
+
+        xRand = rand() % 20;
+        yRand = rand() % 15;
+
+        if (xRand == apple.x && yRand == apple.y)
+        {
+            xRand = rand() % 20;
+            yRand = rand() % 15;
+        }
+
+        apple.x = xVector[xRand];
+        apple.y = yVector[yRand];
+    }
+}
+
+void apple_draw()
+{
+    al_draw_bitmap(sprites.apple, apple.x, apple.y, 0);
+}
+
+ALLEGRO_FONT* font;
+long score_display;
+
+void hud_init()
+{
+    font = al_create_builtin_font();
+    must_init(font, "font");
+
+    score_display = 0;
+}
+
+void hud_deinit()
+{
+    al_destroy_font(font);
+}
+
+void hud_update()
+{
+    if (frames % 2)
+        return;
+
+    for (long i = 5; i > 0; i--)
+    {
+        long diff = 1 << i;
+        if (score_display <= (score - diff))
+            score_display += diff;
+    }
+}
+
+void hud_draw()
+{
+    al_draw_textf(
+        font,
+        al_map_rgb_f(1, 1, 1),
+        1, 1,
+        0,
+        "%06ld",
+        score_display
+    );
+}
+
+int main()
+{
+    srand(time(NULL));
+
+    must_init(al_init(), "allegro");
+    must_init(al_install_keyboard(), "keyboard");
+
+    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 10.0);
+    must_init(timer, "timer");
+
+    ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
+    must_init(queue, "queue");
+
+
+
+    disp_init();
+
+    must_init(al_init_image_addon(), "image");
+    sprites_init();
+
+    hud_init();
+
+    al_register_event_source(queue, al_get_keyboard_event_source());
+    al_register_event_source(queue, al_get_display_event_source(disp));
+    al_register_event_source(queue, al_get_timer_event_source(timer));
+
+    keyboard_init();
+    snake_init();
+    tale_init();
+    apple_init();
+
+    frames = 0;
+    score = 0;
+
+    bool done = false;
+    bool redraw = true;
+    ALLEGRO_EVENT event;
+
+    al_start_timer(timer);
+
+    while (1)
+    {
+        al_wait_for_event(queue, &event);
+
+        switch (event.type)
+        {
+        case ALLEGRO_EVENT_TIMER:
+
+            tale_update();
+            snake_update();
+            apple_update();
+            hud_update();
+
+            if (key[ALLEGRO_KEY_ESCAPE])
+                done = true;
+
+            redraw = true;
+            frames++;
+            break;
+
+        case ALLEGRO_EVENT_DISPLAY_CLOSE:
+            done = true;
+            break;
+        }
+        if (done)
+            break;
+
+        keyboard_update(&event);
+
+        if (redraw && al_is_event_queue_empty(queue))
+        {
+            disp_pre_draw();
+            al_clear_to_color(al_map_rgb(0, 0, 0));
+
+            apple_draw();
+            tale_draw();
+            snake_draw();
+
+            hud_draw();
+
+            disp_post_draw();
+            redraw = false;
+        }
+    }
+
+    sprites_deinit();
+    disp_deinit();
+    al_destroy_timer(timer);
+    al_destroy_event_queue(queue);
+    hud_deinit();
+
+    return 0;
+}
