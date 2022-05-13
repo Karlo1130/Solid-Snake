@@ -7,6 +7,8 @@
 #include <allegro5/allegro_image.h>
 #include <Windows.h>
 
+//the stories should have been called tails from the beginning jiji
+
 long frames;
 long score;
 
