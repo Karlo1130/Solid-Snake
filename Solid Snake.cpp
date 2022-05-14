@@ -109,23 +109,23 @@ void keyboard_update(ALLEGRO_EVENT* event)
 #define WEED_H 31
 
 
-typedef struct SPRITES
-{
-    ALLEGRO_BITMAP* _sheet;
+    typedef struct SPRITES
+    {
+        ALLEGRO_BITMAP* _sheet;
 
-    ALLEGRO_BITMAP* snake;
+        ALLEGRO_BITMAP* snake;
 
-    ALLEGRO_BITMAP* apple;
+        ALLEGRO_BITMAP* apple;
 
-    ALLEGRO_BITMAP* grass;
-    ALLEGRO_BITMAP* weed;
+        ALLEGRO_BITMAP* grass;
+        ALLEGRO_BITMAP* weed;
 
-    ALLEGRO_BITMAP* menu;
+        ALLEGRO_BITMAP* menu;
 
-    ALLEGRO_BITMAP* lose;
+        ALLEGRO_BITMAP* lose;
 
-} SPRITES;
-SPRITES sprites;
+    } SPRITES;
+    SPRITES sprites;
 
 ALLEGRO_BITMAP* sprite_grab(int x, int y, int w, int h)
 {
@@ -158,18 +158,43 @@ void sprites_deinit()
     al_destroy_bitmap(sprites._sheet);
 }
 
+#define PLAY_Y 100
+#define OPTIONS_Y 132
+#define SCORE_Y 164
+#define CREDITS_Y 196
+#define CLOSE_Y 228
 
 ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu/menu_empty.png");
 
-void menu_init()
+ALLEGRO_FONT* fontm;
+
+void menu_screen_init()
 {
     sprites.menu = al_load_bitmap("imagenes/menu/menu_empty.png");
     must_init(sprites.menu, "menu");
+
+    fontm = al_create_builtin_font();
+    must_init(fontm, "font");
+}
+
+int r1 = 1, r2 = 1, r3 = 1, r4 = 1, r5 = 1;
+int g1 = 1, g2 = 1, g3 = 1, g4 = 1, g5 = 1;
+int b1 = 1, b2 = 1, b3 = 1, b4 = 1, b5 = 1;
+
+void menu_screen_draw()    
+{
+
+    al_draw_bitmap(sprites.menu, 0, 0, 0);
+    al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, PLAY_Y, 0, "PLAY");
+    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, OPTIONS_Y, 0, "OPTIONS");
+    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, SCORE_Y, 0, "SCORE");
+    al_draw_textf(fontm, al_map_rgb_f(r4, g4, b4), 16, CREDITS_Y, 0, "CREDITS");
+    al_draw_textf(fontm, al_map_rgb_f(r5, g5, b5), 16, CLOSE_Y, 0, "CLOSE GAME");
 }
 
 ALLEGRO_BITMAP* lose = al_load_bitmap("imagenes/lose/you_died.png");
 
-void lose_init()
+void lose_screen_init()
 {
     sprites.lose = al_load_bitmap("imagenes/lose/you_died.png");
     must_init(sprites.lose, "lose");
@@ -179,6 +204,97 @@ void screen_deinit()
 {
     al_destroy_bitmap(sprites.menu);
     al_destroy_bitmap(sprites.lose);
+}
+
+#define PLAY 1
+#define OPTIONS 2
+#define SCORE 3
+#define CREDITS 4
+#define CLOSE 5
+
+int mainmenu = 1;
+int selection = 0;
+
+void menu_init()
+{
+
+}
+
+void menu_update()
+{
+
+    if (key[ALLEGRO_KEY_UP])
+    {
+        if (mainmenu != PLAY)
+        {
+            mainmenu--;
+        }
+    }
+    if (key[ALLEGRO_KEY_DOWN])
+    {
+        if (mainmenu != CLOSE)
+        {
+            mainmenu++;
+        }
+    }
+
+    if (mainmenu == PLAY)
+    {
+        b1 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            selection = 1;
+        }
+    }
+    else
+    {
+        b1 = 1;
+    }
+
+    if (mainmenu == OPTIONS)
+    {
+        b2 = 0;
+    }
+    else
+    {
+        b2 = 1;
+    }
+
+    if (mainmenu == SCORE)
+    {
+        b3 = 0;
+    }
+    else
+    {
+        b3 = 1;
+    }
+
+    if (mainmenu == CREDITS)
+    {
+        b4 = 0;
+    }
+    else
+    {
+        b4 = 1;
+    }
+
+    if (mainmenu == CLOSE)
+    {
+        b5 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            selection = 5;
+        }
+    }
+    else
+    {
+        b5 = 1;
+    }
+}
+
+void menu_draw()
+{
+    menu_screen_draw();
 }
 
 //propiedades de la serpiente
@@ -269,6 +385,7 @@ void snake_update()
         }
     }
 
+
     for (int i = tales + 1; i < LIMIT; i++)
     {
         snake[i] = snake[i - 1];
@@ -285,7 +402,6 @@ void snake_draw()
     }
 
     al_draw_bitmap(sprites.snake, snake[0].x, snake[0].y, 0);
-
 }
 
 
@@ -463,8 +579,8 @@ int main()
 
     must_init(al_init_image_addon(), "image");
     sprites_init();
-    menu_init();
-    lose_init();
+    menu_screen_init();
+    lose_screen_init();
 
 
     hud_init();
@@ -474,6 +590,7 @@ int main()
     al_register_event_source(queue, al_get_timer_event_source(timer));
 
     keyboard_init();
+    menu_init();
     snake_init();
     tale_init();
     apple_init();
@@ -495,10 +612,20 @@ int main()
         {
         case ALLEGRO_EVENT_TIMER:
 
-            tale_update();
-            snake_update();
-            apple_update();
-            hud_update();
+            menu_update();
+
+            if (selection == 1) 
+            {
+                tale_update();
+                snake_update();
+                apple_update();
+                hud_update();
+            }
+            
+            if (selection == 5)
+            {
+                done = true;
+            }
 
             if (key[ALLEGRO_KEY_ESCAPE])
                 done = true;
@@ -527,6 +654,11 @@ int main()
             tale_draw();
             hud_draw();
             snake_draw();
+
+            if (selection == 0)
+            {
+                menu_draw();
+            }
 
             disp_post_draw();
             redraw = false;
