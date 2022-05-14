@@ -99,7 +99,7 @@ void keyboard_update(ALLEGRO_EVENT* event)
 #define SNAKE_W 16
 #define SNAKE_H 16
 
-#define APPLE_W 31
+#define APPLE_W 32
 #define APPLE_H 16
 
 #define GRASS_W 15
@@ -119,6 +119,10 @@ typedef struct SPRITES
 
     ALLEGRO_BITMAP* grass;
     ALLEGRO_BITMAP* weed;
+
+    ALLEGRO_BITMAP* menu;
+
+    ALLEGRO_BITMAP* lose;
 
 } SPRITES;
 SPRITES sprites;
@@ -152,6 +156,29 @@ void sprites_deinit()
     al_destroy_bitmap(sprites.weed);
 
     al_destroy_bitmap(sprites._sheet);
+}
+
+
+ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu/menu_empty.png");
+
+void menu_init()
+{
+    sprites.menu = al_load_bitmap("imagenes/menu/menu_empty.png");
+    must_init(sprites.menu, "menu");
+}
+
+ALLEGRO_BITMAP* lose = al_load_bitmap("imagenes/lose/you_died.png");
+
+void lose_init()
+{
+    sprites.lose = al_load_bitmap("imagenes/lose/you_died.png");
+    must_init(sprites.lose, "lose");
+}
+
+void screen_deinit()
+{
+    al_destroy_bitmap(sprites.menu);
+    al_destroy_bitmap(sprites.lose);
 }
 
 //propiedades de la serpiente
@@ -252,7 +279,10 @@ void snake_update()
 void snake_draw()
 {
     if (snake[0].lives < 0)
+    {
+        al_draw_bitmap(sprites.lose, 0, 0, 0);
         return;
+    }
 
     al_draw_bitmap(sprites.snake, snake[0].x, snake[0].y, 0);
 
@@ -410,7 +440,7 @@ void hud_draw()
 void framework_draw()
 {
     al_draw_filled_rectangle(0, 0, 352, 272, al_map_rgba_f(0.6, 0.6, 0.6, 0));
-    al_draw_filled_rectangle(16, 16, 336, 256, al_map_rgba_f(0, 1, 0, 0));
+    al_draw_filled_rectangle(16, 16, 336, 256, al_map_rgba_f(0, 0.5, 0, 0));
 }
 
 int main()
@@ -433,6 +463,9 @@ int main()
 
     must_init(al_init_image_addon(), "image");
     sprites_init();
+    menu_init();
+    lose_init();
+
 
     hud_init();
 
@@ -487,13 +520,13 @@ int main()
         {
             disp_pre_draw();
             al_clear_to_color(al_map_rgb(0, 0, 0));
+            
             framework_draw();
 
             apple_draw();
             tale_draw();
-            snake_draw();
-
             hud_draw();
+            snake_draw();
 
             disp_post_draw();
             redraw = false;
@@ -501,6 +534,7 @@ int main()
     }
 
     sprites_deinit();
+    screen_deinit();
     disp_deinit();
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
