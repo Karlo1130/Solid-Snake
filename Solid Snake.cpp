@@ -5,9 +5,8 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_acodec.h>
 #include <allegro5/allegro_image.h>
-#include <Windows.h>
+#include <allegro5/allegro_primitives.h>
 
-//the stories should have been called tails from the beginning jiji
 
 long frames;
 long score;
@@ -25,10 +24,10 @@ void must_init(bool test, const char* description)
 }
 
 //constantes del display
-#define BUFFER_W 320
-#define BUFFER_H 240
+#define BUFFER_W 352
+#define BUFFER_H 272
 
-#define DISP_SCALE 2
+#define DISP_SCALE 3
 #define DISP_W (BUFFER_W * DISP_SCALE)
 #define DISP_H (BUFFER_H * DISP_SCALE)
 
@@ -224,15 +223,15 @@ void snake_update()
         snake[0].x += 16;
     }
 
-    if (snake[0].x < 0)
-        snake[0].x = 0;
-    if (snake[0].y < 0)
-        snake[0].y = 0;
+    if (snake[0].x < 16)
+        snake[0].x = 16;
+    if (snake[0].y < 16)
+        snake[0].y = 16;
 
-    if (snake[0].x > SNAKE_MAX_X)
-        snake[0].x = SNAKE_MAX_X;
-    if (snake[0].y > SNAKE_MAX_Y)
-        snake[0].y = SNAKE_MAX_Y;
+    if (snake[0].x > SNAKE_MAX_X - 16)
+        snake[0].x = SNAKE_MAX_X - 16;
+    if (snake[0].y > SNAKE_MAX_Y - 16)
+        snake[0].y = SNAKE_MAX_Y - 16;
 
 
     for (int i = 1; i < LIMIT; i++)
@@ -284,7 +283,7 @@ void tale_draw()
 
     for (int i = 1; i <= tales; i++)
     {
-        al_draw_bitmap(sprites.grass, snake[i].x, snake[i].y, 0);
+        al_draw_bitmap(sprites.snake, snake[i].x, snake[i].y, 0);
     }
 }
 
@@ -299,12 +298,13 @@ typedef struct APPLE
 }APPLE;
 APPLE apple;
 
+int xVector[20];
+int yVector[15];
+int aux = 16, auxi = 16;
+int xRand, yRand;
+
 void apple_init()
 {
-    int xVector[20];
-    int yVector[15];
-    int aux = 0, auxi = 0;
-    int xRand, yRand;
 
     for (int i = 0; i < 20; i++)
     {
@@ -327,38 +327,37 @@ void apple_init()
 
 void apple_update()
 {
+    int overlap = 0;
+
     if (snake[0].x == apple.x && snake[0].y == apple.y)
     {
         tales += 1;
         score += 50;
-        int xVector[20];
-        int yVector[15];
-        int aux = 0, auxi = 0;
-        int xRand, yRand;
-
-        for (int i = 0; i < 20; i++)
-        {
-            xVector[i] = aux;
-            aux += 16;
-        }
-
-        for (int i = 0; i < 15; i++)
-        {
-            yVector[i] = auxi;
-            auxi += 16;
-        }
 
         xRand = rand() % 20;
         yRand = rand() % 15;
 
-        if (xRand == apple.x && yRand == apple.y)
-        {
-            xRand = rand() % 20;
-            yRand = rand() % 15;
-        }
-
         apple.x = xVector[xRand];
         apple.y = yVector[yRand];
+
+        while (overlap == 0)
+        {
+            for (int i = 0; i < 300; i++)
+            {
+                if (apple.x == snake[i].x && apple.y == snake[i].y)
+                {
+                    xRand = rand() % 20;
+                    yRand = rand() % 15;
+
+                    apple.x = xVector[xRand];
+                    apple.y = yVector[yRand];
+                }
+                else
+                {
+                    overlap = 1;
+                }
+            }
+        }
     }
 }
 
@@ -403,9 +402,15 @@ void hud_draw()
         al_map_rgb_f(1, 1, 1),
         1, 1,
         0,
-        "%06ld",
+        "%05ld",
         score_display
     );
+}
+
+void framework_draw()
+{
+    al_draw_filled_rectangle(0, 0, 352, 272, al_map_rgba_f(0.6, 0.6, 0.6, 0));
+    al_draw_filled_rectangle(16, 16, 336, 256, al_map_rgba_f(0, 1, 0, 0));
 }
 
 int main()
@@ -414,6 +419,7 @@ int main()
 
     must_init(al_init(), "allegro");
     must_init(al_install_keyboard(), "keyboard");
+    must_init(al_init_primitives_addon(), "primitives");
 
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 10.0);
     must_init(timer, "timer");
@@ -481,6 +487,7 @@ int main()
         {
             disp_pre_draw();
             al_clear_to_color(al_map_rgb(0, 0, 0));
+            framework_draw();
 
             apple_draw();
             tale_draw();
