@@ -158,6 +158,12 @@ void sprites_deinit()
     al_destroy_bitmap(sprites._sheet);
 }
 
+void screen_deinit()
+{
+    al_destroy_bitmap(sprites.menu);
+    al_destroy_bitmap(sprites.lose);
+}
+
 #define PLAY_Y 100
 #define OPTIONS_Y 132
 #define SCORE_Y 164
@@ -177,35 +183,6 @@ void menu_screen_init()
     must_init(fontm, "font");
 }
 
-int r1 = 1, r2 = 1, r3 = 1, r4 = 1, r5 = 1;
-int g1 = 1, g2 = 1, g3 = 1, g4 = 1, g5 = 1;
-int b1 = 1, b2 = 1, b3 = 1, b4 = 1, b5 = 1;
-
-void menu_screen_draw()    
-{
-
-    al_draw_bitmap(sprites.menu, 0, 0, 0);
-    al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, PLAY_Y, 0, "PLAY");
-    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, OPTIONS_Y, 0, "OPTIONS");
-    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, SCORE_Y, 0, "SCORE");
-    al_draw_textf(fontm, al_map_rgb_f(r4, g4, b4), 16, CREDITS_Y, 0, "CREDITS");
-    al_draw_textf(fontm, al_map_rgb_f(r5, g5, b5), 16, CLOSE_Y, 0, "CLOSE GAME");
-}
-
-ALLEGRO_BITMAP* lose = al_load_bitmap("imagenes/lose/you_died.png");
-
-void lose_screen_init()
-{
-    sprites.lose = al_load_bitmap("imagenes/lose/you_died.png");
-    must_init(sprites.lose, "lose");
-}
-
-void screen_deinit()
-{
-    al_destroy_bitmap(sprites.menu);
-    al_destroy_bitmap(sprites.lose);
-}
-
 #define PLAY 1
 #define OPTIONS 2
 #define SCORE 3
@@ -213,12 +190,11 @@ void screen_deinit()
 #define CLOSE 5
 
 int mainmenu = 1;
-int selection = 0;
+int menu_selection = 0;
 
-void menu_init()
-{
-
-}
+int r1 = 1, r2 = 1, r3 = 1, r4 = 1, r5 = 1;
+int g1 = 1, g2 = 1, g3 = 1, g4 = 1, g5 = 1;
+int b1 = 1, b2 = 1, b3 = 1, b4 = 1, b5 = 1;
 
 void menu_update()
 {
@@ -243,7 +219,7 @@ void menu_update()
         b1 = 0;
         if (key[ALLEGRO_KEY_SPACE])
         {
-            selection = 1;
+            menu_selection = 1;
         }
     }
     else
@@ -283,7 +259,7 @@ void menu_update()
         b5 = 0;
         if (key[ALLEGRO_KEY_SPACE])
         {
-            selection = 5;
+            menu_selection = 5;
         }
     }
     else
@@ -292,9 +268,88 @@ void menu_update()
     }
 }
 
-void menu_draw()
+void menu_draw()    
 {
-    menu_screen_draw();
+
+    al_draw_bitmap(sprites.menu, 0, 0, 0);
+    al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, PLAY_Y, 0, "PLAY");
+    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, OPTIONS_Y, 0, "OPTIONS");
+    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, SCORE_Y, 0, "SCORE");
+    al_draw_textf(fontm, al_map_rgb_f(r4, g4, b4), 16, CREDITS_Y, 0, "CREDITS");
+    al_draw_textf(fontm, al_map_rgb_f(r5, g5, b5), 16, CLOSE_Y, 0, "CLOSE GAME");
+}
+
+ALLEGRO_BITMAP* lose = al_load_bitmap("imagenes/lose/you_died.png");
+ALLEGRO_FONT* fontl;
+
+#define RESTART_Y 164
+#define LOSE_CLOSE_Y 196
+
+void lose_screen_init()
+{
+    sprites.lose = al_load_bitmap("imagenes/lose/you_died.png");
+    must_init(sprites.lose, "lose");
+}
+
+#define RESTART 1
+#define LOSE_CLOSE 2
+
+int lose_menu = 1;
+int lose_menu_selection = 0;
+
+void lose_update()
+{
+
+    if (key[ALLEGRO_KEY_UP])
+    {
+        if (lose_menu != RESTART)
+        {
+            lose_menu--;
+        }
+    }
+    if (key[ALLEGRO_KEY_DOWN])
+    {   
+        if (lose_menu != LOSE_CLOSE)
+        {
+            lose_menu++;
+        }
+    }
+    
+    if (lose_menu == RESTART)
+    {
+        g1 = 0;
+        b1 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            lose_menu_selection = 1;
+        }
+    }
+    else
+    {
+        g1 = 1;
+        b1 = 1;
+    }
+    if (lose_menu == LOSE_CLOSE)
+    {
+        g2 = 0;
+        b2 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            lose_menu_selection = 2;
+        }
+    }
+    else
+    {
+        g2 = 1;
+        b2 = 1;
+    }
+}
+
+void lose_draw()
+{
+    al_draw_bitmap(sprites.lose, 0, 0, 0);
+    al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, RESTART_Y, 0, "RESTART");
+    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, LOSE_CLOSE_Y, 0, "CLOSE GAME");
 }
 
 //propiedades de la serpiente
@@ -397,7 +452,9 @@ void snake_draw()
 {
     if (snake[0].lives < 0)
     {
-        al_draw_bitmap(sprites.lose, 0, 0, 0);
+        menu_selection = 6;
+        lose_update();
+        lose_draw();
         return;
     }
 
@@ -432,10 +489,6 @@ void tale_draw()
         al_draw_bitmap(sprites.snake, snake[i].x, snake[i].y, 0);
     }
 }
-
-//propiedades de la manzana
-#define APPLE_MAX_X (BUFFER_W - APPLE_W)
-#define APPLE_MAX_Y (BUFFER_H - APPLE_H)
 
 typedef struct APPLE
 {
@@ -559,6 +612,47 @@ void framework_draw()
     al_draw_filled_rectangle(16, 16, 336, 256, al_map_rgba_f(0, 0.5, 0, 0));
 }
 
+void restart()
+{
+    menu_selection = 1;
+
+    score = 0;
+    score_display = 0;
+    tales = 3;
+    movement = 4;
+
+    snake_init();
+    tale_init();
+
+    apple.x = xVector[rand() % 20];
+    apple.y = yVector[rand() % 15];
+
+    int overlap = 0;
+
+    overlap = 0;
+
+    while (overlap == 0)
+    {
+        for (int i = 0; i < 300; i++)
+        {
+            if (apple.x == snake[i].x && apple.y == snake[i].y)
+            {
+                xRand = rand() % 20;
+                yRand = rand() % 15;
+
+                apple.x = xVector[xRand];
+                apple.y = yVector[yRand];
+            }
+            else
+            {
+                overlap = 1;
+            }
+        }
+    }
+
+    lose_menu_selection = 0;
+}
+
 int main()
 {
     srand(time(NULL));
@@ -590,7 +684,6 @@ int main()
     al_register_event_source(queue, al_get_timer_event_source(timer));
 
     keyboard_init();
-    menu_init();
     snake_init();
     tale_init();
     apple_init();
@@ -612,17 +705,30 @@ int main()
         {
         case ALLEGRO_EVENT_TIMER:
 
-            menu_update();
+            if (menu_selection == 0)
+            {
+                menu_update();
+            }
 
-            if (selection == 1) 
+            if (menu_selection == 1)
             {
                 tale_update();
                 snake_update();
                 apple_update();
                 hud_update();
             }
-            
-            if (selection == 5)
+
+            if (lose_menu_selection == 1)
+            {
+                restart();
+            }
+
+            if (menu_selection == 5)
+            {
+                done = true;
+            }
+
+            if (lose_menu_selection == 2)
             {
                 done = true;
             }
@@ -655,7 +761,7 @@ int main()
             hud_draw();
             snake_draw();
 
-            if (selection == 0)
+            if (menu_selection == 0)
             {
                 menu_draw();
             }
