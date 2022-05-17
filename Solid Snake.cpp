@@ -27,7 +27,7 @@ void must_init(bool test, const char* description)
 #define BUFFER_W 352
 #define BUFFER_H 272
 
-#define DISP_SCALE 3
+int DISP_SCALE = 3;
 #define DISP_W (BUFFER_W * DISP_SCALE)
 #define DISP_H (BUFFER_H * DISP_SCALE)
 
@@ -230,6 +230,10 @@ void menu_update()
     if (mainmenu == OPTIONS)
     {
         b2 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            menu_selection = 2;
+        }
     }
     else
     {
@@ -336,6 +340,7 @@ void lose_update()
         if (key[ALLEGRO_KEY_SPACE])
         {
             lose_menu_selection = 2;
+
         }
     }
     else
@@ -350,6 +355,211 @@ void lose_draw()
     al_draw_bitmap(sprites.lose, 0, 0, 0);
     al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, RESTART_Y, 0, "RESTART");
     al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, LOSE_CLOSE_Y, 0, "CLOSE GAME");
+}
+
+#define SOUND_Y 100
+#define FULLSCREEN_Y 132
+#define DALTONIC_Y 164
+#define ACCESSIBILITY_Y 196
+#define BACK_Y 228
+
+#define SOUND 1
+#define FULLSCREEN 2
+#define DALTONIC 3
+#define ACCESSIBILITY 4
+#define BACK 5
+
+int option_menu = 1;
+int option_menu_selection = 0;
+
+void options_update()
+{
+
+    if (key[ALLEGRO_KEY_UP])
+    {
+        if (option_menu != SOUND)
+        {
+            option_menu--;
+        }
+    }
+    if (key[ALLEGRO_KEY_DOWN])
+    {
+        if (option_menu != BACK)
+        {
+            option_menu++;
+        }
+    }
+
+    if (option_menu == SOUND)
+    {
+        b1 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            option_menu_selection = 1;
+        }
+    }
+    else
+    {
+        b1 = 1;
+    }
+    if (option_menu == FULLSCREEN)
+    {
+        b2 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            option_menu_selection = 2;
+        }
+    }
+    else
+    {
+        b2 = 1;
+    }
+
+    if (option_menu == DALTONIC)
+    {
+        b3 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            option_menu_selection = 3;
+        }
+    }
+    else
+    {
+        b3 = 1;
+    }
+
+    if (option_menu == ACCESSIBILITY)
+    {
+        b4 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            option_menu_selection = 4;
+        }
+    }
+    else
+    {
+        b4 = 1;
+    }
+
+    if (option_menu == BACK)
+    {
+        b5 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            option_menu_selection = 5;
+        }
+    }
+    else
+    {
+        b5 = 1;
+    }
+
+}
+
+void options_draw()
+{
+    al_draw_bitmap(sprites.menu, 0, 0, 0);
+    al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, SOUND_Y, 0, "SOUND OPTIONS");
+    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, FULLSCREEN_Y, 0, "FULLSCREEN MODE");
+    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, DALTONIC_Y, 0, "DALTONIC MODE");
+    al_draw_textf(fontm, al_map_rgb_f(r4, g4, b4), 16, ACCESSIBILITY_Y, 0, "ACCESSIBILITY OPTIONS");
+    al_draw_textf(fontm, al_map_rgb_f(r5, g5, b5), 16, BACK_Y, 0, "BACK");
+}
+
+float frames_per_second = 10.0;
+
+#define SPEED_Y 132
+#define DISPLAY_Y 164
+
+#define SPEED 1
+#define DISPLAY 2
+#define ACCESSIBILTY_BACK 3
+
+int accessibility_option_menu = 1;
+int accessibility_option_menu_selection = 0;
+
+void options_accessibility_update()
+{
+    if (key[ALLEGRO_KEY_UP])
+    {
+        if (accessibility_option_menu != SPEED)
+        {
+            accessibility_option_menu--;
+        }
+    }
+    if (key[ALLEGRO_KEY_DOWN])
+    {
+        if (accessibility_option_menu != ACCESSIBILTY_BACK)
+        {
+            accessibility_option_menu++;
+        }
+    }
+
+    if (accessibility_option_menu == SPEED)
+    {
+        b1 = 0;
+        if (key[ALLEGRO_KEY_RIGHT])
+        {
+            if (accessibility_option_menu != 100.0)
+            {
+                frames_per_second+=10;
+            }
+        }
+        if (key[ALLEGRO_KEY_LEFT])
+        {
+            if (accessibility_option_menu != 1.0)
+            {
+                frames_per_second--;
+            }
+        }
+    }
+    else
+    {
+        b1 = 1;
+    }
+    if (accessibility_option_menu == DISPLAY)
+    {
+        b2 = 0;
+        if (key[ALLEGRO_KEY_RIGHT])
+        {
+            if (accessibility_option_menu != 4.0)
+            {
+                DISP_SCALE++;
+            }
+        }
+        if (key[ALLEGRO_KEY_LEFT])
+        {
+            if (accessibility_option_menu != 1.0)
+            {
+                DISP_SCALE--;
+            }
+        }
+    }
+    else
+    {
+        b2 = 1;
+    }
+
+    if (accessibility_option_menu == ACCESSIBILTY_BACK)
+    {
+        b3 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            accessibility_option_menu_selection = 3;
+        }
+    }
+    else
+    {
+        b3 = 1;
+    }
+}
+
+void accessibility_options_draw()
+{
+    al_draw_bitmap(sprites.menu, 0, 0, 0);
+    al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, SPEED_Y, 0, "SNAKE SPEED");
+    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, DISPLAY_Y, 0, "DISPLAY SCALE");
+    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, ACCESSIBILITY_Y, 0, "BACK TO OPTIONS");
 }
 
 //propiedades de la serpiente
@@ -661,7 +871,7 @@ int main()
     must_init(al_install_keyboard(), "keyboard");
     must_init(al_init_primitives_addon(), "primitives");
 
-    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 10.0);
+    ALLEGRO_TIMER* timer = al_create_timer(1.0 / frames_per_second);
     must_init(timer, "timer");
 
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -718,6 +928,25 @@ int main()
                 hud_update();
             }
 
+            if (menu_selection == 2)
+            {
+                mainmenu = 6;
+                options_update();
+                if (option_menu_selection == 4)
+                {
+                    options_accessibility_update();
+                }
+
+                if (option_menu_selection == 5)
+                {
+                    mainmenu = 1;
+                    option_menu = 1;
+                    menu_selection = 0;
+                    option_menu_selection = 0;
+                    break;
+                }
+            }
+
             if (lose_menu_selection == 1)
             {
                 restart();
@@ -764,6 +993,16 @@ int main()
             if (menu_selection == 0)
             {
                 menu_draw();
+            }
+
+            if (menu_selection == 2)
+            {
+                options_draw();
+            }
+
+            if (option_menu_selection == 4)
+            {
+                accessibility_options_draw();
             }
 
             disp_post_draw();
