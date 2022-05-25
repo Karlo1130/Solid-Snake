@@ -6,6 +6,7 @@
 #include <allegro5/allegro_acodec.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_audio.h>
 
 
 long frames;
@@ -164,11 +165,101 @@ void screen_deinit()
     al_destroy_bitmap(sprites.lose);
 }
 
+ALLEGRO_SAMPLE* snake_jazz;
+ALLEGRO_SAMPLE* menu_change;
+ALLEGRO_SAMPLE* meow;
+ALLEGRO_SAMPLE* game;
+ALLEGRO_SAMPLE* eat_sound;
+ALLEGRO_SAMPLE* hurt;
+ALLEGRO_SAMPLE* souls_dead;
+ALLEGRO_SAMPLE* guitar;
+ALLEGRO_SAMPLE* halo;
+
+ALLEGRO_SAMPLE_INSTANCE* main_theme;
+ALLEGRO_SAMPLE_INSTANCE* menu_select;
+ALLEGRO_SAMPLE_INSTANCE* gameplay;
+ALLEGRO_SAMPLE_INSTANCE* dead_sound;
+ALLEGRO_SAMPLE_INSTANCE* post_dead_sound;
+ALLEGRO_SAMPLE_INSTANCE* dead_menu;
+ALLEGRO_SAMPLE_INSTANCE* credits_music;
+
+void audio_init()
+{
+    al_install_audio();
+    al_init_acodec_addon();
+    al_reserve_samples(16);
+
+    snake_jazz = al_load_sample("music/bso_menu.wav");
+    must_init(snake_jazz, "snake jazz");
+    main_theme = al_create_sample_instance(snake_jazz);
+    must_init(main_theme, "main theme");
+
+    al_set_sample_instance_playmode(main_theme, ALLEGRO_PLAYMODE_LOOP);
+    al_attach_sample_instance_to_mixer(main_theme, al_get_default_mixer());
+
+    meow = al_load_sample("music/menu_select.wav");
+    must_init(meow, "meow");
+    menu_select = al_create_sample_instance(meow);
+    must_init(menu_select, "menu select");
+
+    al_set_sample_instance_playmode(menu_select, ALLEGRO_PLAYMODE_ONCE);
+    al_attach_sample_instance_to_mixer(menu_select, al_get_default_mixer());
+
+    game = al_load_sample("music/gameplay.wav");
+    must_init(game, "game");
+    gameplay = al_create_sample_instance(game);
+    must_init(gameplay, "gameplay");
+
+    al_set_sample_instance_playmode(gameplay, ALLEGRO_PLAYMODE_LOOP);
+    al_attach_sample_instance_to_mixer(gameplay, al_get_default_mixer());
+
+    hurt = al_load_sample("music/dead_sound.wav");
+    must_init(hurt, "hurt");
+    dead_sound = al_create_sample_instance(hurt);
+    must_init(dead_sound, "dead_sound");
+
+    al_set_sample_instance_playmode(dead_sound, ALLEGRO_PLAYMODE_ONCE);
+    al_attach_sample_instance_to_mixer(dead_sound, al_get_default_mixer());
+
+    souls_dead = al_load_sample("music/post_dead_sound.wav");
+    must_init(souls_dead, "souls dead");
+    post_dead_sound = al_create_sample_instance(souls_dead);
+    must_init(post_dead_sound, "post_dead_sound");
+
+    al_set_sample_instance_playmode(post_dead_sound, ALLEGRO_PLAYMODE_ONCE);
+    al_attach_sample_instance_to_mixer(post_dead_sound, al_get_default_mixer());
+
+    guitar = al_load_sample("music/dead_menu.wav");
+    must_init(guitar, "guitar");
+    dead_menu = al_create_sample_instance(guitar);
+    must_init(dead_menu, "dead_menu");
+
+    al_set_sample_instance_playmode(dead_menu, ALLEGRO_PLAYMODE_LOOP);
+    al_attach_sample_instance_to_mixer(dead_menu, al_get_default_mixer());
+
+    halo = al_load_sample("music/credits_music.wav");
+    must_init(halo, "halo");
+    credits_music = al_create_sample_instance(halo);
+    must_init(credits_music, "credits music");
+
+    al_set_sample_instance_playmode(credits_music, ALLEGRO_PLAYMODE_LOOP);
+    al_attach_sample_instance_to_mixer(credits_music, al_get_default_mixer());
+
+    eat_sound = al_load_sample("music/eat_sound.wav");
+    must_init(eat_sound, "eat sound");
+
+    menu_change = al_load_sample("music/menu_change.wav");
+    must_init(menu_change, "menu change");
+}
+
+void audio_deinit()
+{
+    al_destroy_sample(snake_jazz);
+}
+
 #define PLAY_Y 100
-#define OPTIONS_Y 132
-#define SCORE_Y 164
-#define CREDITS_Y 196
-#define CLOSE_Y 228
+#define CREDITS_Y 132
+#define CLOSE_Y 164
 
 ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu/menu_empty.png");
 
@@ -184,17 +275,15 @@ void menu_screen_init()
 }
 
 #define PLAY 1
-#define OPTIONS 2
-#define SCORE 3
-#define CREDITS 4
-#define CLOSE 5
+#define CREDITS 2
+#define CLOSE 3
 
 int mainmenu = 1;
 int menu_selection = 0;
 
-int r1 = 1, r2 = 1, r3 = 1, r4 = 1, r5 = 1;
-int g1 = 1, g2 = 1, g3 = 1, g4 = 1, g5 = 1;
-int b1 = 1, b2 = 1, b3 = 1, b4 = 1, b5 = 1;
+int r1 = 1, r2 = 1, r3 = 1;
+int g1 = 1, g2 = 1, g3 = 1;
+int b1 = 1, b2 = 1, b3 = 1;
 
 void menu_update()
 {
@@ -203,6 +292,7 @@ void menu_update()
     {
         if (mainmenu != PLAY)
         {
+            al_play_sample(menu_change, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, NULL);
             mainmenu--;
         }
     }
@@ -210,6 +300,7 @@ void menu_update()
     {
         if (mainmenu != CLOSE)
         {
+            al_play_sample(menu_change, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, NULL);
             mainmenu++;
         }
     }
@@ -220,6 +311,7 @@ void menu_update()
         if (key[ALLEGRO_KEY_SPACE])
         {
             menu_selection = 1;
+            al_play_sample_instance(menu_select);
         }
     }
     else
@@ -227,12 +319,13 @@ void menu_update()
         b1 = 1;
     }
 
-    if (mainmenu == OPTIONS)
+    if (mainmenu == CREDITS)
     {
         b2 = 0;
         if (key[ALLEGRO_KEY_SPACE])
         {
             menu_selection = 2;
+            al_play_sample_instance(menu_select);
         }
     }
     else
@@ -240,35 +333,18 @@ void menu_update()
         b2 = 1;
     }
 
-    if (mainmenu == SCORE)
-    {
-        b3 = 0;
-    }
-    else
-    {
-        b3 = 1;
-    }
-
-    if (mainmenu == CREDITS)
-    {
-        b4 = 0;
-    }
-    else
-    {
-        b4 = 1;
-    }
-
     if (mainmenu == CLOSE)
     {
-        b5 = 0;
+        b3 = 0;
         if (key[ALLEGRO_KEY_SPACE])
         {
+            al_play_sample_instance(menu_select);
             menu_selection = 5;
         }
     }
     else
     {
-        b5 = 1;
+        b3 = 1;
     }
 }
 
@@ -277,17 +353,16 @@ void menu_draw()
 
     al_draw_bitmap(sprites.menu, 0, 0, 0);
     al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, PLAY_Y, 0, "PLAY");
-    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, OPTIONS_Y, 0, "OPTIONS");
-    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, SCORE_Y, 0, "SCORE");
-    al_draw_textf(fontm, al_map_rgb_f(r4, g4, b4), 16, CREDITS_Y, 0, "CREDITS");
-    al_draw_textf(fontm, al_map_rgb_f(r5, g5, b5), 16, CLOSE_Y, 0, "CLOSE GAME");
+    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, CREDITS_Y, 0, "CREDITS");
+    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, CLOSE_Y, 0, "CLOSE GAME");
 }
 
 ALLEGRO_BITMAP* lose = al_load_bitmap("imagenes/lose/you_died.png");
 ALLEGRO_FONT* fontl;
 
 #define RESTART_Y 164
-#define LOSE_CLOSE_Y 196
+#define BACK_MENU_Y 196
+#define LOSE_CLOSE_Y 228
 
 void lose_screen_init()
 {
@@ -296,18 +371,19 @@ void lose_screen_init()
 }
 
 #define RESTART 1
-#define LOSE_CLOSE 2
+#define BACK_MENU 2
+#define LOSE_CLOSE 3
 
 int lose_menu = 1;
 int lose_menu_selection = 0;
 
 void lose_update()
 {
-
     if (key[ALLEGRO_KEY_UP])
     {
         if (lose_menu != RESTART)
         {
+            al_play_sample(menu_change, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, NULL);
             lose_menu--;
         }
     }
@@ -315,6 +391,7 @@ void lose_update()
     {   
         if (lose_menu != LOSE_CLOSE)
         {
+            al_play_sample(menu_change, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, NULL);
             lose_menu++;
         }
     }
@@ -325,6 +402,8 @@ void lose_update()
         b1 = 0;
         if (key[ALLEGRO_KEY_SPACE])
         {
+            al_play_sample_instance(menu_select);
+
             lose_menu_selection = 1;
         }
     }
@@ -333,13 +412,21 @@ void lose_update()
         g1 = 1;
         b1 = 1;
     }
-    if (lose_menu == LOSE_CLOSE)
+
+    if (lose_menu == BACK_MENU)
     {
         g2 = 0;
         b2 = 0;
         if (key[ALLEGRO_KEY_SPACE])
         {
+            al_play_sample_instance(menu_select);
+
             lose_menu_selection = 2;
+
+            menu_selection = 0;
+
+            g2 = 1;
+            b2 = 1;
 
         }
     }
@@ -348,218 +435,31 @@ void lose_update()
         g2 = 1;
         b2 = 1;
     }
+
+    if (lose_menu == LOSE_CLOSE)
+    {
+        g3 = 0;
+        b3 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            al_play_sample_instance(menu_select);
+            lose_menu_selection = 3;
+
+        }
+    }
+    else
+    {
+        g3 = 1;
+        b3 = 1;
+    }
 }
 
 void lose_draw()
 {
     al_draw_bitmap(sprites.lose, 0, 0, 0);
     al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, RESTART_Y, 0, "RESTART");
-    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, LOSE_CLOSE_Y, 0, "CLOSE GAME");
-}
-
-#define SOUND_Y 100
-#define FULLSCREEN_Y 132
-#define DALTONIC_Y 164
-#define ACCESSIBILITY_Y 196
-#define BACK_Y 228
-
-#define SOUND 1
-#define FULLSCREEN 2
-#define DALTONIC 3
-#define ACCESSIBILITY 4
-#define BACK 5
-
-int option_menu = 1;
-int option_menu_selection = 0;
-
-void options_update()
-{
-
-    if (key[ALLEGRO_KEY_UP])
-    {
-        if (option_menu != SOUND)
-        {
-            option_menu--;
-        }
-    }
-    if (key[ALLEGRO_KEY_DOWN])
-    {
-        if (option_menu != BACK)
-        {
-            option_menu++;
-        }
-    }
-
-    if (option_menu == SOUND)
-    {
-        b1 = 0;
-        if (key[ALLEGRO_KEY_SPACE])
-        {
-            option_menu_selection = 1;
-        }
-    }
-    else
-    {
-        b1 = 1;
-    }
-    if (option_menu == FULLSCREEN)
-    {
-        b2 = 0;
-        if (key[ALLEGRO_KEY_SPACE])
-        {
-            option_menu_selection = 2;
-        }
-    }
-    else
-    {
-        b2 = 1;
-    }
-
-    if (option_menu == DALTONIC)
-    {
-        b3 = 0;
-        if (key[ALLEGRO_KEY_SPACE])
-        {
-            option_menu_selection = 3;
-        }
-    }
-    else
-    {
-        b3 = 1;
-    }
-
-    if (option_menu == ACCESSIBILITY)
-    {
-        b4 = 0;
-        if (key[ALLEGRO_KEY_SPACE])
-        {
-            option_menu_selection = 4;
-        }
-    }
-    else
-    {
-        b4 = 1;
-    }
-
-    if (option_menu == BACK)
-    {
-        b5 = 0;
-        if (key[ALLEGRO_KEY_SPACE])
-        {
-            option_menu_selection = 5;
-        }
-    }
-    else
-    {
-        b5 = 1;
-    }
-
-}
-
-void options_draw()
-{
-    al_draw_bitmap(sprites.menu, 0, 0, 0);
-    al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, SOUND_Y, 0, "SOUND OPTIONS");
-    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, FULLSCREEN_Y, 0, "FULLSCREEN MODE");
-    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, DALTONIC_Y, 0, "DALTONIC MODE");
-    al_draw_textf(fontm, al_map_rgb_f(r4, g4, b4), 16, ACCESSIBILITY_Y, 0, "ACCESSIBILITY OPTIONS");
-    al_draw_textf(fontm, al_map_rgb_f(r5, g5, b5), 16, BACK_Y, 0, "BACK");
-}
-
-float frames_per_second = 10.0;
-
-#define SPEED_Y 132
-#define DISPLAY_Y 164
-
-#define SPEED 1
-#define DISPLAY 2
-#define ACCESSIBILTY_BACK 3
-
-int accessibility_option_menu = 1;
-int accessibility_option_menu_selection = 0;
-
-void options_accessibility_update()
-{
-    if (key[ALLEGRO_KEY_UP])
-    {
-        if (accessibility_option_menu != SPEED)
-        {
-            accessibility_option_menu--;
-        }
-    }
-    if (key[ALLEGRO_KEY_DOWN])
-    {
-        if (accessibility_option_menu != ACCESSIBILTY_BACK)
-        {
-            accessibility_option_menu++;
-        }
-    }
-
-    if (accessibility_option_menu == SPEED)
-    {
-        b1 = 0;
-        if (key[ALLEGRO_KEY_RIGHT])
-        {
-            if (accessibility_option_menu != 100.0)
-            {
-                frames_per_second+=10;
-            }
-        }
-        if (key[ALLEGRO_KEY_LEFT])
-        {
-            if (accessibility_option_menu != 1.0)
-            {
-                frames_per_second--;
-            }
-        }
-    }
-    else
-    {
-        b1 = 1;
-    }
-    if (accessibility_option_menu == DISPLAY)
-    {
-        b2 = 0;
-        if (key[ALLEGRO_KEY_RIGHT])
-        {
-            if (accessibility_option_menu != 4.0)
-            {
-                DISP_SCALE++;
-            }
-        }
-        if (key[ALLEGRO_KEY_LEFT])
-        {
-            if (accessibility_option_menu != 1.0)
-            {
-                DISP_SCALE--;
-            }
-        }
-    }
-    else
-    {
-        b2 = 1;
-    }
-
-    if (accessibility_option_menu == ACCESSIBILTY_BACK)
-    {
-        b3 = 0;
-        if (key[ALLEGRO_KEY_SPACE])
-        {
-            accessibility_option_menu_selection = 3;
-        }
-    }
-    else
-    {
-        b3 = 1;
-    }
-}
-
-void accessibility_options_draw()
-{
-    al_draw_bitmap(sprites.menu, 0, 0, 0);
-    al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, SPEED_Y, 0, "SNAKE SPEED");
-    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, DISPLAY_Y, 0, "DISPLAY SCALE");
-    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, ACCESSIBILITY_Y, 0, "BACK TO OPTIONS");
+    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, BACK_MENU_Y, 0, "BACK TO MENU");
+    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, LOSE_CLOSE_Y, 0, "CLOSE GAME");
 }
 
 //propiedades de la serpiente
@@ -646,6 +546,8 @@ void snake_update()
     {
         if (snake[0].x == snake[i].x && snake[0].y == snake[i].y)
         {
+            al_play_sample_instance(dead_sound);
+            al_play_sample_instance(post_dead_sound);
             snake[0].lives--;
         }
     }
@@ -663,9 +565,14 @@ void snake_draw()
     if (snake[0].lives < 0)
     {
         menu_selection = 6;
+        al_play_sample_instance(dead_menu);
         lose_update();
         lose_draw();
         return;
+    }
+    else
+    {
+        al_stop_sample_instance(dead_menu);
     }
 
     al_draw_bitmap(sprites.snake, snake[0].x, snake[0].y, 0);
@@ -740,6 +647,8 @@ void apple_update()
 
     if (snake[0].x == apple.x && snake[0].y == apple.y)
     {
+        al_play_sample(eat_sound, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, NULL);
+
         tales += 1;
         score += 50;
 
@@ -863,6 +772,49 @@ void restart()
     lose_menu_selection = 0;
 }
 
+int credits_menu = 1;
+int credits_menu_selection = 0;
+
+void credits_update()
+{
+
+    if (key[ALLEGRO_KEY_UP])
+    {
+        if (credits_menu != 1)
+        {
+            credits_menu--;
+        }
+    }
+    if (key[ALLEGRO_KEY_DOWN])
+    {
+        if (credits_menu != 2)
+        {
+            credits_menu++;
+        }
+    }
+
+    if (credits_menu == 2)
+    {
+        b1 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            credits_menu_selection = 1;
+
+        }
+    }
+    else
+    {
+        b1 = 1;
+    }
+}
+
+void credits_draw()
+{
+    al_draw_bitmap(sprites.menu, 0, 0, 0);
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, b1), 16, 196, 0, "AQUI IRAN LOS CREDITOS JEJE");
+
+}
+
 int main()
 {
     srand(time(NULL));
@@ -871,7 +823,7 @@ int main()
     must_init(al_install_keyboard(), "keyboard");
     must_init(al_init_primitives_addon(), "primitives");
 
-    ALLEGRO_TIMER* timer = al_create_timer(1.0 / frames_per_second);
+    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 10.0);
     must_init(timer, "timer");
 
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -880,6 +832,8 @@ int main()
 
 
     disp_init();
+
+    audio_init();
 
     must_init(al_init_image_addon(), "image");
     sprites_init();
@@ -900,7 +854,7 @@ int main()
 
     frames = 0;
     score = 0;
-
+    
     bool done = false;
     bool redraw = true;
     ALLEGRO_EVENT event;
@@ -917,34 +871,45 @@ int main()
 
             if (menu_selection == 0)
             {
+                
                 menu_update();
+                al_play_sample_instance(main_theme);
+            }
+            else
+            {
+                al_stop_sample_instance(main_theme);
             }
 
             if (menu_selection == 1)
             {
+                al_play_sample_instance(gameplay);
                 tale_update();
                 snake_update();
                 apple_update();
                 hud_update();
             }
+            else
+            {
+                al_stop_sample_instance(gameplay);
+            }
 
             if (menu_selection == 2)
             {
-                mainmenu = 6;
-                options_update();
-                if (option_menu_selection == 4)
-                {
-                    options_accessibility_update();
-                }
+                al_play_sample_instance(credits_music);
+                credits_update();
+            }
+            else
+            {
+                al_stop_sample_instance(credits_music);
+            }
 
-                if (option_menu_selection == 5)
-                {
-                    mainmenu = 1;
-                    option_menu = 1;
-                    menu_selection = 0;
-                    option_menu_selection = 0;
-                    break;
-                }
+            if (credits_menu_selection == 1)
+            {
+                
+                mainmenu = 1;
+                menu_selection = 0;
+                credits_menu_selection = 0;
+                
             }
 
             if (lose_menu_selection == 1)
@@ -952,12 +917,26 @@ int main()
                 restart();
             }
 
+            if (lose_menu_selection == 2)
+            {
+                
+                score = 0;
+                score_display = 0;
+                tales = 3;
+                movement = 4;
+
+                snake_init();
+                tale_init();
+
+                lose_menu_selection = 0;
+            }
+
             if (menu_selection == 5)
             {
                 done = true;
             }
 
-            if (lose_menu_selection == 2)
+            if (lose_menu_selection == 3)
             {
                 done = true;
             }
@@ -997,13 +976,9 @@ int main()
 
             if (menu_selection == 2)
             {
-                options_draw();
+                credits_draw();
             }
 
-            if (option_menu_selection == 4)
-            {
-                accessibility_options_draw();
-            }
 
             disp_post_draw();
             redraw = false;
@@ -1013,6 +988,7 @@ int main()
     sprites_deinit();
     screen_deinit();
     disp_deinit();
+    audio_deinit();
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
     hud_deinit();
