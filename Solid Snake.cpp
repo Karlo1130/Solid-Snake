@@ -257,9 +257,9 @@ void audio_deinit()
     al_destroy_sample(snake_jazz);
 }
 
-#define PLAY_Y 100
-#define CREDITS_Y 132
-#define CLOSE_Y 164
+#define PLAY_Y 164
+#define CREDITS_Y 196
+#define CLOSE_Y 228
 
 ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu/menu_empty.png");
 
@@ -324,6 +324,7 @@ void menu_update()
         b2 = 0;
         if (key[ALLEGRO_KEY_SPACE])
         {
+            
             menu_selection = 2;
             al_play_sample_instance(menu_select);
         }
@@ -360,6 +361,7 @@ void menu_draw()
 ALLEGRO_BITMAP* lose = al_load_bitmap("imagenes/lose/you_died.png");
 ALLEGRO_FONT* fontl;
 
+#define SCORE_Y 132
 #define RESTART_Y 164
 #define BACK_MENU_Y 196
 #define LOSE_CLOSE_Y 228
@@ -454,9 +456,18 @@ void lose_update()
     }
 }
 
+ALLEGRO_FONT* font;
+long score_display;
+
+void hud_draw()
+{
+    al_draw_textf(font, al_map_rgb_f(1, 1, 1), 1, 1, 0, "%05ld", score_display);
+}
+
 void lose_draw()
 {
     al_draw_bitmap(sprites.lose, 0, 0, 0);
+    al_draw_textf(fontm, al_map_rgb_f(1, 0, 0), 116, SCORE_Y, 0, "SCORE: %05ld", score_display);
     al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, RESTART_Y, 0, "RESTART");
     al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, BACK_MENU_Y, 0, "BACK TO MENU");
     al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, LOSE_CLOSE_Y, 0, "CLOSE GAME");
@@ -684,9 +695,6 @@ void apple_draw()
     al_draw_bitmap(sprites.apple, apple.x, apple.y, 0);
 }
 
-ALLEGRO_FONT* font;
-long score_display;
-
 void hud_init()
 {
     font = al_create_builtin_font();
@@ -713,17 +721,6 @@ void hud_update()
     }
 }
 
-void hud_draw()
-{
-    al_draw_textf(
-        font,
-        al_map_rgb_f(1, 1, 1),
-        1, 1,
-        0,
-        "%05ld",
-        score_display
-    );
-}
 
 void framework_draw()
 {
@@ -778,14 +775,14 @@ int credits_menu_selection = 0;
 void credits_update()
 {
 
-    if (key[ALLEGRO_KEY_UP])
+    if (key[ALLEGRO_KEY_LEFT])
     {
         if (credits_menu != 1)
         {
             credits_menu--;
         }
     }
-    if (key[ALLEGRO_KEY_DOWN])
+    if (key[ALLEGRO_KEY_RIGHT])
     {
         if (credits_menu != 2)
         {
@@ -793,25 +790,28 @@ void credits_update()
         }
     }
 
-    if (credits_menu == 2)
+    if (credits_menu == 1)
     {
-        b1 = 0;
-        if (key[ALLEGRO_KEY_SPACE])
+        if (key[ALLEGRO_KEY_LEFT])
         {
             credits_menu_selection = 1;
-
         }
     }
-    else
+
+    if (credits_menu == 2)
     {
-        b1 = 1;
+        if (key[ALLEGRO_KEY_RIGHT])
+        {
+            credits_menu_selection = 1;
+        }
     }
 }
 
 void credits_draw()
 {
     al_draw_bitmap(sprites.menu, 0, 0, 0);
-    al_draw_textf(fontm, al_map_rgb_f(1, 1, b1), 16, 196, 0, "AQUI IRAN LOS CREDITOS JEJE");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 228, 0, "BACK");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 300, 228, 0, "NEXT");
 
 }
 
@@ -897,19 +897,18 @@ int main()
             {
                 al_play_sample_instance(credits_music);
                 credits_update();
+
+                if (credits_menu_selection == 1)
+                {
+                    credits_menu_selection = 0;
+                    menu_selection = 0;
+                    credits_menu = 1;
+
+                }
             }
             else
             {
                 al_stop_sample_instance(credits_music);
-            }
-
-            if (credits_menu_selection == 1)
-            {
-                
-                mainmenu = 1;
-                menu_selection = 0;
-                credits_menu_selection = 0;
-                
             }
 
             if (lose_menu_selection == 1)
