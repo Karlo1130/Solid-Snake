@@ -122,6 +122,7 @@ void keyboard_update(ALLEGRO_EVENT* event)
         ALLEGRO_BITMAP* weed;
 
         ALLEGRO_BITMAP* menu;
+        ALLEGRO_BITMAP* framework;
 
         ALLEGRO_BITMAP* lose;
 
@@ -163,6 +164,26 @@ void screen_deinit()
 {
     al_destroy_bitmap(sprites.menu);
     al_destroy_bitmap(sprites.lose);
+}
+
+#define PLAY_Y 164
+#define CREDITS_Y 196
+#define CLOSE_Y 228
+
+ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu/menu.png");
+ALLEGRO_BITMAP* framework = al_load_bitmap("imagenes/gameplay/framework.png");
+
+ALLEGRO_FONT* fontm;
+
+void menu_screen_init()
+{
+    sprites.menu = al_load_bitmap("imagenes/menu/menu.png");
+    must_init(sprites.menu, "menu");
+    sprites.framework = al_load_bitmap("imagenes/gameplay/framework.png");
+    must_init(sprites.framework, "framework");
+
+    fontm = al_create_builtin_font();
+    must_init(fontm, "font");
 }
 
 ALLEGRO_SAMPLE* snake_jazz;
@@ -255,23 +276,6 @@ void audio_init()
 void audio_deinit()
 {
     al_destroy_sample(snake_jazz);
-}
-
-#define PLAY_Y 164
-#define CREDITS_Y 196
-#define CLOSE_Y 228
-
-ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu/menu_empty.png");
-
-ALLEGRO_FONT* fontm;
-
-void menu_screen_init()
-{
-    sprites.menu = al_load_bitmap("imagenes/menu/menu_empty.png");
-    must_init(sprites.menu, "menu");
-
-    fontm = al_create_builtin_font();
-    must_init(fontm, "font");
 }
 
 #define PLAY 1
@@ -724,8 +728,7 @@ void hud_update()
 
 void framework_draw()
 {
-    al_draw_filled_rectangle(0, 0, 352, 272, al_map_rgba_f(0.6, 0.6, 0.6, 0));
-    al_draw_filled_rectangle(16, 16, 336, 256, al_map_rgba_f(0, 0.5, 0, 0));
+    al_draw_bitmap(sprites.framework, 0, 0, 0);
 }
 
 void restart()
