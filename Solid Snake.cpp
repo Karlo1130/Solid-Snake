@@ -116,12 +116,27 @@ void keyboard_update(ALLEGRO_EVENT* event)
 
         ALLEGRO_BITMAP* snake;
 
+        ALLEGRO_BITMAP* body_c;
+        ALLEGRO_BITMAP* body_f;
+
+        ALLEGRO_BITMAP* head_up;
+        ALLEGRO_BITMAP* head_down;
+        ALLEGRO_BITMAP* head_right;
+        ALLEGRO_BITMAP* head_left;
+
+        ALLEGRO_BITMAP* corner_tl;
+        ALLEGRO_BITMAP* corner_tr;
+        ALLEGRO_BITMAP* corner_bl;
+        ALLEGRO_BITMAP* corner_br;
+
         ALLEGRO_BITMAP* apple;
 
         ALLEGRO_BITMAP* grass;
         ALLEGRO_BITMAP* weed;
 
         ALLEGRO_BITMAP* menu;
+        ALLEGRO_BITMAP* credits;
+
         ALLEGRO_BITMAP* framework;
 
         ALLEGRO_BITMAP* lose;
@@ -139,23 +154,39 @@ ALLEGRO_BITMAP* sprite_grab(int x, int y, int w, int h)
 //se declaran los pixeles de los sprites
 void sprites_init()
 {
-    sprites._sheet = al_load_bitmap("GameSnake.png");
-    must_init(sprites._sheet, "GameSnake");
+    sprites._sheet = al_load_bitmap("imagenes/snake/all.png");
+    must_init(sprites._sheet, "all");
 
-    sprites.snake = sprite_grab(0, 0, SNAKE_W, SNAKE_H);
+    sprites.apple = sprite_grab(0, 0, SNAKE_W, SNAKE_H);
 
-    sprites.apple = sprite_grab(16, 0, APPLE_W, APPLE_H);
+    sprites.body_f = sprite_grab(48, 32, SNAKE_W, SNAKE_H);
+    sprites.body_c = sprite_grab(32, 32, SNAKE_W, SNAKE_H);
 
-    sprites.grass = sprite_grab(0, 17, GRASS_W, GRASS_H);
-    sprites.weed = sprite_grab(16, 17, WEED_W, WEED_H);
+    sprites.head_up = sprite_grab(32, 0, SNAKE_W, SNAKE_H);
+    sprites.head_down = sprite_grab(48, 16, SNAKE_W, SNAKE_H);
+    sprites.head_right = sprite_grab(48, 0, SNAKE_W, SNAKE_H);
+    sprites.head_left = sprite_grab(32, 16, SNAKE_W, SNAKE_H);
+
+    sprites.corner_tl = sprite_grab(0, 32, SNAKE_W, SNAKE_H);
+    sprites.corner_tr = sprite_grab(16, 32, SNAKE_W, SNAKE_H);
+    sprites.corner_bl = sprite_grab(0, 48, SNAKE_W, SNAKE_H);
+    sprites.corner_br = sprite_grab(16, 48, SNAKE_W, SNAKE_H);
 }
 
 void sprites_deinit()
 {
     al_destroy_bitmap(sprites.snake);
     al_destroy_bitmap(sprites.apple);
-    al_destroy_bitmap(sprites.grass);
-    al_destroy_bitmap(sprites.weed);
+
+    al_destroy_bitmap(sprites.head_up);
+    al_destroy_bitmap(sprites.head_down);
+    al_destroy_bitmap(sprites.head_right);
+    al_destroy_bitmap(sprites.head_left);
+
+    al_destroy_bitmap(sprites.corner_tl);
+    al_destroy_bitmap(sprites.corner_tr);
+    al_destroy_bitmap(sprites.corner_bl);
+    al_destroy_bitmap(sprites.corner_br);
 
     al_destroy_bitmap(sprites._sheet);
 }
@@ -172,6 +203,7 @@ void screen_deinit()
 
 ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu/menu.png");
 ALLEGRO_BITMAP* framework = al_load_bitmap("imagenes/gameplay/framework.png");
+ALLEGRO_BITMAP* credits = al_load_bitmap("imagenes/menu/credits.png");
 
 ALLEGRO_FONT* fontm;
 
@@ -179,6 +211,9 @@ void menu_screen_init()
 {
     sprites.menu = al_load_bitmap("imagenes/menu/menu.png");
     must_init(sprites.menu, "menu");
+    sprites.credits = al_load_bitmap("imagenes/menu/credits.png");
+    must_init(sprites.credits, "credits");
+
     sprites.framework = al_load_bitmap("imagenes/gameplay/framework.png");
     must_init(sprites.framework, "framework");
 
@@ -487,6 +522,7 @@ typedef struct SNAKE
 {
     int x, y;
     int lives;
+    int follow;
 
 }SNAKE;
 SNAKE snake[LIMIT];
@@ -533,19 +569,82 @@ void snake_update()
             movement = 6;
     }
 
-    if (movement == 8) {
+    if (movement == 8) 
+    {
         snake[0].y -= 16;
-    }
-    else if (movement == 2) {
-        snake[0].y += 16;
-    }
-    else if (movement == 4) {
-        snake[0].x -= 16;
-    }
-    else if (movement == 6) {
-        snake[0].x += 16;
+        
+        if (snake[0].y != snake[2].y && snake[0].x != snake[2].x && snake[0].x < snake[2].x)
+        {
+            snake[1].follow = 4;
+        }
+        else if (snake[0].y != snake[2].y && snake[0].x != snake[2].x && snake[0].x > snake[2].x)
+        {
+            snake[1].follow = 3;
+        }
+        else
+        {
+            snake[1].follow = 2;
+        }
     }
 
+    else if (movement == 2) 
+    {
+        snake[0].y += 16;
+        
+        if (snake[0].y != snake[2].y && snake[0].x != snake[2].x && snake[0].x < snake[2].x)
+        {
+            snake[1].follow = 6;
+        }
+        else if (snake[0].y != snake[2].y && snake[0].x != snake[2].x && snake[0].x > snake[2].x)
+        {
+            snake[1].follow = 5;
+        }
+        else
+        {
+            snake[1].follow = 2;
+        }
+    }
+
+    else if (movement == 4) 
+    {
+        snake[0].x -= 16;
+        
+        if (snake[0].y != snake[2].y && snake[0].x != snake[2].x && snake[0].y < snake[2].y)
+        {
+            snake[1].follow = 5;
+        }
+        else if (snake[0].y != snake[2].y && snake[0].x != snake[2].x && snake[0].y > snake[2].y)
+        {
+            snake[1].follow = 3;
+        }
+        else
+        {
+            snake[1].follow = 1;
+        }
+    }
+
+    else if (movement == 6) 
+    {
+        snake[0].x += 16;
+        snake[0].follow = 1;
+    }
+    
+    if (movement == 6)
+    {
+        if (snake[0].y != snake[2].y && snake[0].x != snake[2].x && snake[0].y > snake[2].y)
+        {
+            snake[1].follow = 4;
+        }
+        else if (snake[0].y != snake[2].y && snake[0].x != snake[2].x && snake[0].y < snake[2].y)
+        {
+            snake[1].follow = 6;
+        }
+        else
+        {
+            snake[1].follow = 1;
+        }
+    }
+    
     if (snake[0].x < 16)
         snake[0].x = 16;
     if (snake[0].y < 16)
@@ -567,12 +666,12 @@ void snake_update()
         }
     }
 
-
+    
     for (int i = tales + 1; i < LIMIT; i++)
     {
         snake[i] = snake[i - 1];
     }
-
+    
 }
 
 void snake_draw()
@@ -590,7 +689,22 @@ void snake_draw()
         al_stop_sample_instance(dead_menu);
     }
 
-    al_draw_bitmap(sprites.snake, snake[0].x, snake[0].y, 0);
+    switch (movement)
+    {
+    case 8:
+        al_draw_bitmap(sprites.head_up, snake[0].x, snake[0].y, 0);
+        break;
+    case 2:
+        al_draw_bitmap(sprites.head_down, snake[0].x, snake[0].y, 0);
+        break;
+    case 6:
+        al_draw_bitmap(sprites.head_right, snake[0].x, snake[0].y, 0);
+        break;
+    case 4:
+        al_draw_bitmap(sprites.head_left, snake[0].x, snake[0].y, 0);
+        break;
+    }
+    
 }
 
 
@@ -600,6 +714,7 @@ void tale_init()
     {
         snake[i].x = snake[0].x + (i * 16);
         snake[i].y = snake[0].y;
+        snake[i-1].follow = 1;
     }
 }
 
@@ -608,6 +723,7 @@ void tale_update()
     for (int i = tales; i > 0; i--)
     {
         snake[i] = snake[i - 1];
+        snake[i].follow = snake[i - 1].follow;
     }
 }
 
@@ -615,10 +731,41 @@ void tale_draw()
 {
     if (snake[0].lives < 0)
         return;
-
+    
     for (int i = 1; i <= tales; i++)
     {
-        al_draw_bitmap(sprites.snake, snake[i].x, snake[i].y, 0);
+        switch (snake[i].follow)
+        {
+        case 1:
+            al_draw_bitmap(sprites.body_f, snake[i].x, snake[i].y, 0);
+
+            break;
+
+        case 2:
+            al_draw_bitmap(sprites.body_c, snake[i].x, snake[i].y, 0);
+
+            break;
+
+        case 3:
+            al_draw_bitmap(sprites.corner_tl, snake[i].x, snake[i].y, 0);
+
+            break;
+
+        case 4:
+            al_draw_bitmap(sprites.corner_tr, snake[i].x, snake[i].y, 0);
+
+            break;
+
+        case 5:
+            al_draw_bitmap(sprites.corner_bl, snake[i].x, snake[i].y, 0);
+
+            break;
+
+        case 6:
+            al_draw_bitmap(sprites.corner_br, snake[i].x, snake[i].y, 0);
+
+            break;
+        }
     }
 }
 
@@ -797,6 +944,8 @@ void credits_update()
     {
         if (key[ALLEGRO_KEY_LEFT])
         {
+            al_play_sample(meow, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, NULL);
+
             credits_menu_selection = 1;
         }
     }
@@ -805,6 +954,8 @@ void credits_update()
     {
         if (key[ALLEGRO_KEY_RIGHT])
         {
+            al_play_sample(meow, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, NULL);
+
             credits_menu_selection = 1;
         }
     }
@@ -812,9 +963,9 @@ void credits_update()
 
 void credits_draw()
 {
-    al_draw_bitmap(sprites.menu, 0, 0, 0);
-    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 228, 0, "BACK");
-    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 300, 228, 0, "NEXT");
+    al_draw_bitmap(sprites.credits, 0, 0, 0);
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 244, 0, "BACK");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 300, 244, 0, "NEXT");
 
 }
 
@@ -826,7 +977,7 @@ int main()
     must_init(al_install_keyboard(), "keyboard");
     must_init(al_init_primitives_addon(), "primitives");
 
-    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 10.0);
+    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 1.0);
     must_init(timer, "timer");
 
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
