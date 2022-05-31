@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <Windows.h>
 #include <ctime>
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
@@ -22,6 +23,11 @@ void must_init(bool test, const char* description)
 
     printf("couldn't initialize %s\n", description);
     exit(1);
+}
+
+void delay(int secs)
+{
+    for (int i = (time(NULL) + secs); time(NULL) != i; time(NULL));
 }
 
 //constantes del display
@@ -138,6 +144,7 @@ void keyboard_update(ALLEGRO_EVENT* event)
         ALLEGRO_BITMAP* credits;
 
         ALLEGRO_BITMAP* framework;
+        ALLEGRO_BITMAP* loading;
 
         ALLEGRO_BITMAP* lose;
 
@@ -197,12 +204,14 @@ void screen_deinit()
     al_destroy_bitmap(sprites.lose);
 }
 
-#define PLAY_Y 164
+#define PLAY_Y 132
+#define HOW_TO_PLAY_Y 164
 #define CREDITS_Y 196
 #define CLOSE_Y 228
 
 ALLEGRO_BITMAP* menu = al_load_bitmap("imagenes/menu/menu.png");
 ALLEGRO_BITMAP* framework = al_load_bitmap("imagenes/gameplay/framework.png");
+ALLEGRO_BITMAP* loading = al_load_bitmap("imagenes/menu/loading.png");
 ALLEGRO_BITMAP* credits = al_load_bitmap("imagenes/menu/credits.png");
 
 ALLEGRO_FONT* fontm;
@@ -217,6 +226,9 @@ void menu_screen_init()
     sprites.framework = al_load_bitmap("imagenes/gameplay/framework.png");
     must_init(sprites.framework, "framework");
 
+    sprites.loading = al_load_bitmap("imagenes/menu/loading.png");
+    must_init(sprites.loading, "loading");
+
     fontm = al_create_builtin_font();
     must_init(fontm, "font");
 }
@@ -230,9 +242,11 @@ ALLEGRO_SAMPLE* hurt;
 ALLEGRO_SAMPLE* souls_dead;
 ALLEGRO_SAMPLE* guitar;
 ALLEGRO_SAMPLE* halo;
+ALLEGRO_SAMPLE* hollow_knight;
 
 ALLEGRO_SAMPLE_INSTANCE* main_theme;
 ALLEGRO_SAMPLE_INSTANCE* menu_select;
+ALLEGRO_SAMPLE_INSTANCE* how_to_play;
 ALLEGRO_SAMPLE_INSTANCE* gameplay;
 ALLEGRO_SAMPLE_INSTANCE* dead_sound;
 ALLEGRO_SAMPLE_INSTANCE* post_dead_sound;
@@ -252,6 +266,14 @@ void audio_init()
 
     al_set_sample_instance_playmode(main_theme, ALLEGRO_PLAYMODE_LOOP);
     al_attach_sample_instance_to_mixer(main_theme, al_get_default_mixer());
+
+    hollow_knight = al_load_sample("music/how_to_play.wav");
+    must_init(hollow_knight, "hollow_knight");
+    how_to_play = al_create_sample_instance(hollow_knight);
+    must_init(how_to_play, "main theme");
+
+    al_set_sample_instance_playmode(how_to_play, ALLEGRO_PLAYMODE_LOOP);
+    al_attach_sample_instance_to_mixer(how_to_play, al_get_default_mixer());
 
     meow = al_load_sample("music/menu_select.wav");
     must_init(meow, "meow");
@@ -314,15 +336,18 @@ void audio_deinit()
 }
 
 #define PLAY 1
-#define CREDITS 2
-#define CLOSE 3
+#define HOW_TO_PLAY 2
+#define CREDITS 3
+#define CLOSE 4
 
 int mainmenu = 1;
 int menu_selection = 0;
 
-int r1 = 1, r2 = 1, r3 = 1;
-int g1 = 1, g2 = 1, g3 = 1;
-int b1 = 1, b2 = 1, b3 = 1;
+int r1 = 1, r2 = 1, r3 = 1, r4 = 1;
+int g1 = 1, g2 = 1, g3 = 1, g4 = 1;
+int b1 = 1, b2 = 1, b3 = 1, b4 = 1;
+
+int load = 0;
 
 void menu_update()
 {
@@ -349,8 +374,9 @@ void menu_update()
         b1 = 0;
         if (key[ALLEGRO_KEY_SPACE])
         {
-            menu_selection = 1;
             al_play_sample_instance(menu_select);
+
+            menu_selection = 1;
         }
     }
     else
@@ -358,12 +384,12 @@ void menu_update()
         b1 = 1;
     }
 
-    if (mainmenu == CREDITS)
+    if (mainmenu == HOW_TO_PLAY)
     {
         b2 = 0;
         if (key[ALLEGRO_KEY_SPACE])
         {
-            
+
             menu_selection = 2;
             al_play_sample_instance(menu_select);
         }
@@ -373,9 +399,24 @@ void menu_update()
         b2 = 1;
     }
 
-    if (mainmenu == CLOSE)
+    if (mainmenu == CREDITS)
     {
         b3 = 0;
+        if (key[ALLEGRO_KEY_SPACE])
+        {
+            
+            menu_selection = 3;
+            al_play_sample_instance(menu_select);
+        }
+    }
+    else
+    {
+        b3 = 1;
+    }
+
+    if (mainmenu == CLOSE)
+    {
+        b4 = 0;
         if (key[ALLEGRO_KEY_SPACE])
         {
             al_play_sample_instance(menu_select);
@@ -384,7 +425,7 @@ void menu_update()
     }
     else
     {
-        b3 = 1;
+        b4 = 1;
     }
 }
 
@@ -393,8 +434,9 @@ void menu_draw()
 
     al_draw_bitmap(sprites.menu, 0, 0, 0);
     al_draw_textf(fontm, al_map_rgb_f(r1, g1, b1), 16, PLAY_Y, 0, "PLAY");
-    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, CREDITS_Y, 0, "CREDITS");
-    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, CLOSE_Y, 0, "CLOSE GAME");
+    al_draw_textf(fontm, al_map_rgb_f(r2, g2, b2), 16, HOW_TO_PLAY_Y, 0, "HOW TO PLAY");
+    al_draw_textf(fontm, al_map_rgb_f(r3, g3, b3), 16, CREDITS_Y, 0, "CREDITS");
+    al_draw_textf(fontm, al_map_rgb_f(r4, g4, b4), 16, CLOSE_Y, 0, "CLOSE GAME");
 }
 
 ALLEGRO_BITMAP* lose = al_load_bitmap("imagenes/lose/you_died.png");
@@ -969,6 +1011,13 @@ void credits_draw()
 
 }
 
+void load_draw()
+{
+    al_draw_bitmap(sprites.loading, 0, 0, 0);
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 261, 163, 0, "CONTROLS");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 290, 244, 0, "BACK");
+}
+
 int main()
 {
     srand(time(NULL));
@@ -977,7 +1026,7 @@ int main()
     must_init(al_install_keyboard(), "keyboard");
     must_init(al_init_primitives_addon(), "primitives");
 
-    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 1.0);
+    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 10.0);
     must_init(timer, "timer");
 
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -1025,7 +1074,6 @@ int main()
 
             if (menu_selection == 0)
             {
-                
                 menu_update();
                 al_play_sample_instance(main_theme);
             }
@@ -1048,6 +1096,24 @@ int main()
             }
 
             if (menu_selection == 2)
+            {
+                al_play_sample_instance(how_to_play);
+                credits_update();
+
+                if (credits_menu_selection == 1)
+                {
+                    credits_menu_selection = 0;
+                    menu_selection = 0;
+                    credits_menu = 1;
+
+                }
+            }
+            else
+            {
+                al_stop_sample_instance(how_to_play);
+            }
+
+            if (menu_selection == 3)
             {
                 al_play_sample_instance(credits_music);
                 credits_update();
@@ -1128,6 +1194,11 @@ int main()
             }
 
             if (menu_selection == 2)
+            {
+                load_draw();
+            }
+
+            if (menu_selection == 3)
             {
                 credits_draw();
             }
