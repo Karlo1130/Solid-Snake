@@ -282,14 +282,14 @@ void audio_init()
     must_init(dead_sound, "dead_sound");
 
     al_set_sample_instance_playmode(dead_sound, ALLEGRO_PLAYMODE_ONCE);
+
     al_attach_sample_instance_to_mixer(dead_sound, al_get_default_mixer());
 
     souls_dead = al_load_sample("music/post_dead_sound.wav");
     must_init(souls_dead, "souls dead");
     post_dead_sound = al_create_sample_instance(souls_dead);
     must_init(post_dead_sound, "post_dead_sound");
-
-    al_set_sample_instance_playmode(post_dead_sound, ALLEGRO_PLAYMODE_ONCE);
+    
     al_attach_sample_instance_to_mixer(post_dead_sound, al_get_default_mixer());
 
     guitar = al_load_sample("music/dead_menu.wav");
