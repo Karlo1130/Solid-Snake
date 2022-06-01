@@ -25,11 +25,6 @@ void must_init(bool test, const char* description)
     exit(1);
 }
 
-void delay(int secs)
-{
-    for (int i = (time(NULL) + secs); time(NULL) != i; time(NULL));
-}
-
 //constantes del display
 #define BUFFER_W 352
 #define BUFFER_H 272
@@ -105,16 +100,6 @@ void keyboard_update(ALLEGRO_EVENT* event)
 
 #define SNAKE_W 16
 #define SNAKE_H 16
-
-#define APPLE_W 32
-#define APPLE_H 16
-
-#define GRASS_W 15
-#define GRASS_H 31
-
-#define WEED_W 31
-#define WEED_H 31
-
 
     typedef struct SPRITES
     {
