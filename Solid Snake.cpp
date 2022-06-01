@@ -961,10 +961,10 @@ void restart()
     lose_menu_selection = 0;
 }
 
-int credits_menu = 1;
+int credits_menu = 2;
 int credits_menu_selection = 0;
 
-void credits_update()
+void how_to_play_update()
 {
 
     if (key[ALLEGRO_KEY_LEFT])
@@ -1003,12 +1003,93 @@ void credits_update()
     }
 }
 
+void credits_update()
+{
+
+    if (key[ALLEGRO_KEY_LEFT])
+    {
+        if (credits_menu != 1)
+        {
+            credits_menu--;
+        }
+    }
+    if (key[ALLEGRO_KEY_RIGHT])
+    {
+        if (credits_menu != 4)
+        {
+            credits_menu++;
+        }
+    }
+
+    if (credits_menu == 1)
+    {
+        if (key[ALLEGRO_KEY_LEFT])
+        {
+            al_play_sample(meow, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, NULL);
+
+            credits_menu_selection = 1;
+        }
+    }
+
+    if (credits_menu == 4)
+    {
+        if (key[ALLEGRO_KEY_RIGHT])
+        {
+            al_play_sample(meow, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, NULL);
+
+            credits_menu_selection = 1;
+        }
+    }
+}
+
 void credits_draw()
 {
     al_draw_bitmap(sprites.credits, 0, 0, 0);
-    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 244, 0, "BACK");
-    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 300, 244, 0, "NEXT");
 
+    if (credits_menu == 2)
+    {
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 16, 0, "THIS GAME HAS BEEN");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 32, 0, "CREATED IN ITS");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 48, 0, "ENTIRETY BY");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 64, 0, "KARLO SALVADOR");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 80, 0, "ESPINOZA RUBIO");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 96, 0, "AS A PROJECT FOR");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 112, 0, "PROGRAMMING 1 BY");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 128, 0, "PROFFESOR SOTO MUNOS");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 144, 0, "JONATHAN GIOVANNI");
+
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 244, 0, "BACK");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 300, 244, 0, "NEXT");
+    }
+    else
+    {
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 16, 0, "IN THE SOFTWARE");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 32, 0, "DEVELOPMENT");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 48, 0, "ENGINEERING");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 64, 0, "CAREER AT THE");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 80, 0, "AUTONOMOUS");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 96, 0, "UNIVERSITY OF");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 112, 0, "BAJA CALIFORNIA SUR");
+
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 244, 0, "BACK");
+        al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 300, 244, 0, "MENU");
+    }
+}
+
+void credits_draw2()
+{
+    al_draw_bitmap(sprites.credits, 0, 0, 0);
+
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 16, 0, "IN THE SOFTWARE");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 32, 0, "DEVELOPMENT");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 48, 0, "ENGINEERING");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 64, 0, "CAREER AT THE");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 80, 0, "AUTONOMOUS");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 96, 0, "UNIVERSITY OF");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 112, 0, "BAJA CALIFORNIA SUR");
+
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 16, 244, 0, "BACK");
+    al_draw_textf(fontm, al_map_rgb_f(1, 1, 1), 300, 244, 0, "MENU");
 }
 
 void load_draw()
@@ -1098,7 +1179,7 @@ int main()
             if (menu_selection == 2)
             {
                 al_play_sample_instance(how_to_play);
-                credits_update();
+                how_to_play_update();
 
                 if (credits_menu_selection == 1)
                 {
@@ -1122,7 +1203,7 @@ int main()
                 {
                     credits_menu_selection = 0;
                     menu_selection = 0;
-                    credits_menu = 1;
+                    credits_menu = 2;
 
                 }
             }
